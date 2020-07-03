@@ -1,0 +1,5 @@
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/genuinetools/pkg v0.0.0-20181022210355-2fcf164d37cb h1:9MQ4N7zyYTtdjLGqE5McDbgjIjqR5TAPc6lytEOdndc=
+github.com/genuinetools/pkg v0.0.0-20181022210355-2fcf164d37cb/go.mod h1:XTcrCYlXPxnxL2UpnwuRn7tcaTn9HAhxFoFJucootk8=
+github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
+github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
