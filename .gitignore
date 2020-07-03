@@ -49,3 +49,5 @@ profile.out
 !go.mod
 
 dist/
+
+terragrunt-v19-upgrade
