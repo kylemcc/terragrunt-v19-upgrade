@@ -269,7 +269,7 @@ func (c *command) upgrade(input []byte) ([]byte, error) {
 		}
 	}
 
-	return f.Bytes(), nil
+	return hclv2write.Format(f.Bytes()), nil
 }
 
 func (c *command) writeNode(depth int, parentKey string, body *hclv2write.Body, node hclv1ast.Node, cl *commentList) {
@@ -489,8 +489,6 @@ func (c *command) loadDetachedComments(f *hclv1ast.File) *commentList {
 }
 
 func (c *command) save(path string, contents []byte) error {
-	contents = hclv2write.Format(contents)
-
 	// check the new config
 	p := hclv2parse.NewParser()
 	_, diags := p.ParseHCL(contents, path)
