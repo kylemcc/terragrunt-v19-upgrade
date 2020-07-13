@@ -238,9 +238,9 @@ func (c *command) upgrade(input []byte) ([]byte, error) {
 	body := f.Body()
 
 	c.writeNode(-1, "", body, &hclv1ast.ObjectList{Items: tgSettings}, detachedComments)
-	body.AppendNewline()
 
 	if len(inputVars) > 0 {
+		body.AppendNewline()
 		inputs := &hclv1ast.ObjectItem{
 			Keys: []*hclv1ast.ObjectKey{
 				{
