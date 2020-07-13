@@ -120,7 +120,7 @@ func (c *command) run(ctx context.Context, args []string) error {
 	}
 
 	for _, p := range paths {
-		orig, err := ioutil.ReadFile(p)
+		orig, err := c.readFile(p)
 		if err != nil {
 			return err
 		}
@@ -143,8 +143,12 @@ func (c *command) run(ctx context.Context, args []string) error {
 
 func (c *command) validateArgs(args []string) error {
 	if len(args) < 1 {
-		fmt.Fprintf(os.Stderr, "usage: %s [flags] [file|dir ...]\n\n", name)
+		fmt.Fprintf(os.Stderr, "usage: %s [flags] [file|dir ...|-]\n\n", name)
 		return flag.ErrHelp
+	}
+
+	if len(args) == 1 && args[0] == "-" {
+		return nil
 	}
 
 	for _, p := range args {
@@ -166,6 +170,10 @@ func (c *command) loadFiles(args []string) ([]string, error) {
 	var files []string
 
 	for _, p := range args {
+		if p == "-" {
+			return []string{"-"}, nil
+		}
+
 		fi, err := os.Stat(p)
 		if err != nil {
 			return files, err
@@ -181,9 +189,15 @@ func (c *command) loadFiles(args []string) ([]string, error) {
 				if err != nil {
 					return err
 				}
+
+				if fi.IsDir() && fi.Name() == ".terragrunt-cache" {
+					return filepath.SkipDir
+				}
+
 				if fi.Name() == "terraform.tfvars" {
 					files = append(files, path)
 				}
+
 				return nil
 			})
 
@@ -200,6 +214,13 @@ func (c *command) loadFiles(args []string) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+func (c *command) readFile(path string) ([]byte, error) {
+	if path == "-" {
+		return ioutil.ReadAll(os.Stdin)
+	}
+	return ioutil.ReadFile(path)
 }
 
 // upgrade reads in a terragrunt <= 0.18 config (hcl v1 syntax) and returns
@@ -504,6 +525,9 @@ func (c *command) save(path string, contents []byte) error {
 
 	if c.dryRun {
 		fmt.Printf("%s:\n%s\n", path, contents)
+		return nil
+	} else if path == "-" {
+		os.Stdout.Write(contents)
 		return nil
 	}
 
