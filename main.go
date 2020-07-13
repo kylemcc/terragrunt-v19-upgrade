@@ -27,7 +27,7 @@ import (
 	"github.com/hashicorp/terraform/tfdiags"
 )
 
-const name = "terragrunt-v12-upgrade"
+const name = "terragrunt-v19-upgrade"
 
 var (
 	tokNewline = &hclv2write.Token{
