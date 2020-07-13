@@ -7,4 +7,5 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/hashicorp/hcl/v2 v2.6.0
 	github.com/hashicorp/terraform v0.12.28
+	github.com/kylelemons/godebug v1.1.0
 )
