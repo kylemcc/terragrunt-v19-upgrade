@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -76,6 +77,8 @@ var (
 	}
 )
 
+var errNotTerragruntConfig = errors.New("file does not contain a terragrunt attribute")
+
 type command struct {
 	recursive bool
 	gitMv     bool
@@ -123,7 +126,10 @@ func (c *command) run(ctx context.Context, args []string) error {
 		}
 
 		upgraded, err := c.upgrade(orig)
-		if err != nil {
+		if err == errNotTerragruntConfig {
+			fmt.Fprintf(os.Stderr, "warning: ignoring file %s. file does not contain a terragrunt attribute.", p)
+			continue
+		} else if err != nil {
 			return fmt.Errorf("error upgrading file %s: %v", p, err)
 		}
 
@@ -222,6 +228,10 @@ func (c *command) upgrade(input []byte) ([]byte, error) {
 		} else {
 			inputVars = append(inputVars, item)
 		}
+	}
+
+	if len(tgSettings) == 0 {
+		return nil, errNotTerragruntConfig
 	}
 
 	f := hclv2write.NewEmptyFile()
