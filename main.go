@@ -503,6 +503,7 @@ func (c *command) save(path string, contents []byte) error {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("Updated %s\n", path)
 
 		cmd := exec.Command("git", "mv", path, newPath)
 		if err := cmd.Run(); err != nil {
@@ -513,6 +514,7 @@ func (c *command) save(path string, contents []byte) error {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("Updated %s\n", path)
 
 		if !c.keepOld {
 			return os.Remove(path)
