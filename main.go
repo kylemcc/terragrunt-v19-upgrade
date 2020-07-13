@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -20,8 +21,10 @@ import (
 	hclv1parser "github.com/hashicorp/hcl/hcl/parser"
 	hclv1token "github.com/hashicorp/hcl/hcl/token"
 	hclv2 "github.com/hashicorp/hcl/v2"
+	hclv2parse "github.com/hashicorp/hcl/v2/hclparse"
 	hclv2syntax "github.com/hashicorp/hcl/v2/hclsyntax"
 	hclv2write "github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/hashicorp/terraform/tfdiags"
 )
 
 const name = "terragrunt-v12-upgrade"
@@ -77,6 +80,7 @@ type command struct {
 	recursive bool
 	gitMv     bool
 	dryRun    bool
+	keepOld   bool
 }
 
 func main() {
@@ -93,6 +97,8 @@ func main() {
 	p.FlagSet.BoolVar(&cmd.recursive, "recursive", false, "Search subdirectores for terraform.tfvars files")
 	p.FlagSet.BoolVar(&cmd.gitMv, "git-mv", false, "Update files in place and \"git mv terraform.tfvars terragrunt.hcl\"")
 	p.FlagSet.BoolVar(&cmd.dryRun, "dry-run", false, "Do not update any files, just print changes to stdout")
+	p.FlagSet.BoolVar(&cmd.keepOld, "k", false, "Keep old terraform.tfvars files")
+	p.FlagSet.BoolVar(&cmd.keepOld, "keep", false, "Keep old terraform.tfvars files")
 
 	p.Action = cmd.run
 	p.Run()
@@ -472,7 +478,45 @@ func (c *command) loadDetachedComments(f *hclv1ast.File) *commentList {
 
 func (c *command) save(path string, contents []byte) error {
 	contents = hclv2write.Format(contents)
-	fmt.Printf("%s", contents)
+
+	// check the new config
+	p := hclv2parse.NewParser()
+	_, diags := p.ParseHCL(contents, path)
+	if diags.HasErrors() {
+		var d tfdiags.Diagnostics
+		d = d.Append(diags)
+		return d.Err()
+	}
+
+	if c.dryRun {
+		fmt.Printf("%s:\n%s\n", path, contents)
+		return nil
+	}
+
+	base := filepath.Dir(path)
+	newPath := filepath.Join(base, "terragrunt.hcl")
+	if c.gitMv {
+		// update the source file and git mv it
+		err := ioutil.WriteFile(path, contents, 0644)
+		if err != nil {
+			return err
+		}
+
+		cmd := exec.Command("git", "mv", path, newPath)
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	} else {
+		err := ioutil.WriteFile(newPath, contents, 0644)
+		if err != nil {
+			return err
+		}
+
+		if !c.keepOld {
+			return os.Remove(path)
+		}
+	}
+
 	return nil
 }
 
