@@ -165,7 +165,7 @@ func (c *command) loadFiles(args []string) ([]string, error) {
 
 		if fi.IsDir() {
 			if !c.recursive {
-				fmt.Fprintf(os.Stderr, "warning: recursive option to specified. ignoring directory %s\n", p)
+				fmt.Fprintf(os.Stderr, "warning: recursive option not specified. ignoring directory %s\n", p)
 				continue
 			}
 
