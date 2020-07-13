@@ -326,6 +326,44 @@ EOF
 `,
 			expectedErr: nil,
 		},
+		{
+			name: "rename functions",
+			input: `
+terragrunt = {
+  include {
+    path = "${find_in_parent_folders()}"
+  }
+
+  terraform {
+    extra_arguments "args" {
+      commands = ["plan", "apply"]
+
+      required_var_files = [
+        "${get_parent_tfvars_dir()}/terraform.tfvars",
+        "${get_tfvars_dir()}/../common.tfvars",
+      ]
+    }
+  }
+}
+`,
+			expected: `
+include {
+  path = find_in_parent_folders()
+}
+
+terraform {
+  extra_arguments "args" {
+    commands = ["plan", "apply"]
+
+    required_var_files = [
+      "${get_parent_terragrunt_dir()}/terraform.tfvars",
+      "${get_terragrunt_dir()}/../common.tfvars",
+    ]
+  }
+}
+`,
+			expectedErr: nil,
+		},
 	}
 
 	for _, c := range cases {
@@ -341,7 +379,6 @@ EOF
 			// ditch the leading newline - used above to make the formatting a bit nicer
 			expected := strings.TrimLeft(c.expected, "\n")
 			if string(actual) != expected {
-				t.Logf("%q\n\n", actual)
 				t.Errorf("incorrect result (-want, +got):\n%s\n", diff.Diff(string(actual), expected))
 			}
 		})

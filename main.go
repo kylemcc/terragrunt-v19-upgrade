@@ -436,6 +436,8 @@ func (c *command) writeLiteral(body *hclv2write.Body, val *hclv1ast.LiteralType)
 		})
 	case hclv1token.STRING:
 		tmpTok := upgradeExpr(val.Token.Text)
+
+		// convert from hclsyntax.Tokens to hclwrite.Tokens
 		var tok hclv2write.Tokens
 		for _, t := range tmpTok {
 			tok = append(tok, &hclv2write.Token{
@@ -443,6 +445,8 @@ func (c *command) writeLiteral(body *hclv2write.Body, val *hclv1ast.LiteralType)
 				Bytes: t.Bytes,
 			})
 		}
+
+		upgradeFunctionNames(tok)
 		body.AppendUnstructuredTokens(tok)
 	}
 }
@@ -693,4 +697,34 @@ func upgradeExpr(expr string) hclv2syntax.Tokens {
 
 	// Return the tokens without the ${}
 	return inner
+}
+
+var renameFuncs = map[string]string{
+	"get_tfvars_dir":        "get_terragrunt_dir",
+	"get_parent_tfvars_dir": "get_parent_terragrunt_dir",
+}
+
+func upgradeFunctionNames(tokens hclv2write.Tokens) {
+	for i, t := range tokens {
+		if t.Type == hclv2syntax.TokenIdent {
+			newName, ok := renameFuncs[string(t.Bytes)]
+			if !ok {
+				continue
+			}
+
+			if i+2 >= len(tokens)-1 {
+				// need at least 2 more tokens in the expresion, '(' and ')', for this to be a valid function call
+				// since we don't have enough, continue
+				continue
+			}
+
+			// finally, make sure the next 2 tokens actually _are_ '(' and ')' - since the 2
+			// renamed functions don't accept any arguments
+			if tokens[i+1].Type != hclv2syntax.TokenOParen || tokens[i+2].Type != hclv2syntax.TokenCParen {
+				continue
+			}
+
+			t.Bytes = []byte(newName)
+		}
+	}
 }
