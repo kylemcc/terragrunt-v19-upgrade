@@ -4,13 +4,12 @@ This is a tool to upgrade [Terragrunt][1] configurations from version <= 0.18 to
 
 ## Warnings / Known Issues / Limitations
 
-This tool should be used with some caution. By default, its behavior is destructive: When upgrading a v0.18 configuration (`terraform.tfvars`), the new configuration will be "validated" by parsing it with the [HCL2 parser][3]. If no errors are returned, the new configuration will be written to disk in a new file (`terragrunt.hcl`), and the old file will be deleted. This should be used with a VCS (or, take a backup first. But seriously, just use git).
+This tool should be used with some caution. By default, its behavior is destructive: When upgrading a v0.18 configuration (`terraform.tfvars`), the new configuration will be "validated" by parsing it with the [HCL2 parser][3]. If no errors are returned, the new configuration will be [formatted][5] and written to disk in a new file (`terragrunt.hcl`), and the old file will be deleted. This should be used with a VCS (or, take a backup first. But seriously, just use git).
 
 This tool does not try to be as comprehensive as the `terraform 0.12upgrade` tool. This should be ok, since the scope of this is much narrower. We're only concerned with upgrading `tfvars` files, and the syntax of those files is much simpler than normal terraform configuration. However, there are still some limitations:
 
 - [Heredoc][4] variables may not be upgraded correctly. If you have heredoc variables in your configuration, check to make sure they were upgraded correctly.
-- Whitespace will not preserved
-- Since interpolations are only supported in the `terragrunt` block in v0.18
+- Whitespace/formatting will not preserved exactly - the upgraded configuration will be formatted with the [standard formatter][5]
 - Multi-line comments may not be properly indented after upgrading (see below)
 - A "line" or "lead" comment on the `terragrunt` block will be lost (see below)
 
@@ -87,3 +86,4 @@ $ terragrunt-v19-upgrade -r dir/
 [2]: https://github.com/gruntwork-io/terragrunt/blob/master/_docs/migration_guides/upgrading_to_terragrunt_0.19.x.md
 [3]: https://pkg.go.dev/github.com/hashicorp/hcl2/hclparse?tab=doc
 [4]: https://www.terraform.io/docs/configuration/expressions.html#string-literals
+[5]: https://pkg.go.dev/github.com/hashicorp/hcl/v2@v2.6.0/hclwrite?tab=doc#Format
